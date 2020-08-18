@@ -40,16 +40,8 @@ pub async fn create_group(workspaces_uuid: &str, group_name: &str) -> Result<Cre
         .await?;
 
     match res.status() {
-        s if s.is_client_error() => Err(anyhow!(
-            "Client error: {}. detail: {}",
-            s,
-            res.text().await?
-        )),
-        s if s.is_server_error() => Err(anyhow!(
-            "Server error: {}. detail: {}",
-            s,
-            res.text().await?
-        )),
+        s if s.is_client_error() => bail!("Client error: {}. detail: {}", s, res.text().await?),
+        s if s.is_server_error() => bail!("Server error: {}. detail: {}", s, res.text().await?),
         _ => Ok(res.json::<CreateGroupsResponse>().await?),
     }
 }
