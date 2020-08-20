@@ -1,2 +1,4 @@
-# atlrust
+ATLrus
+======
+
 Atlassian x Rust CLI
