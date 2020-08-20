@@ -15,9 +15,24 @@ use external::bitbucket;
 mod external;
 
 #[derive(Deserialize, Debug)]
-struct Operation {
+struct InviteOperation {
+    /// Ex: tadashi-aikawa/x-viewer
+    repository: String,
+    /// Ex: read, write
+    permission: String,
+    emails: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct GroupsOperation {
     workspace_uuid: String,
-    groups_to_add: Vec<String>,
+    group_names: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Operation {
+    create_groups: Option<GroupsOperation>,
+    invite: Option<InviteOperation>,
 }
 
 #[derive(Debug, StructOpt)]
@@ -33,12 +48,28 @@ async fn main() -> Result<()> {
     let json_str = fs::read_to_string(&args.input)?;
     let operation = serde_json::from_str::<Operation>(&json_str)?;
 
-    for group_name in operation.groups_to_add.iter() {
-        match bitbucket::v1api::create_group(&operation.workspace_uuid, &group_name).await {
-            Ok(group) => println!("Create a new group, {}!!", group.name),
-            Err(err) => {
-                println!("Fail to create a new group, {}..", group_name);
-                println!("{}", err)
+    if operation.create_groups.is_some() {
+        let x = operation.create_groups.unwrap();
+        for group_name in x.group_names.iter() {
+            match bitbucket::v1api::post_groups(&x.workspace_uuid, &group_name).await {
+                Ok(group) => println!("Create a new group, {}!!", group.name),
+                Err(err) => {
+                    println!("Fail to create a new group, {}..", group_name);
+                    println!("{}", err)
+                }
+            }
+        }
+    }
+
+    if operation.invite.is_some() {
+        let x = operation.invite.unwrap();
+        for email in x.emails.iter() {
+            match bitbucket::v1api::post_invitations(&x.repository, &x.permission, &email).await {
+                Ok(_) => println!("Invite {}!!", &email),
+                Err(err) => {
+                    println!("Fail to invite {}..", &email);
+                    println!("{}", err)
+                }
             }
         }
     }

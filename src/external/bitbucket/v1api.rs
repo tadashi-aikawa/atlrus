@@ -16,13 +16,13 @@ lazy_static! {
 
 /// Actually.. there are more properties.
 #[derive(Deserialize, Debug)]
-pub struct CreateGroupsResponse {
+pub struct PostGroupsResponse {
     pub name: String,
     pub slug: String,
 }
 
 /// Create a group in specified workspace.
-pub async fn create_group(workspaces_uuid: &str, group_name: &str) -> Result<CreateGroupsResponse> {
+pub async fn post_groups(workspaces_uuid: &str, group_name: &str) -> Result<PostGroupsResponse> {
     let url = format!(
         "{base_url}/groups/{workspace}",
         base_url = URL,
@@ -42,6 +42,41 @@ pub async fn create_group(workspaces_uuid: &str, group_name: &str) -> Result<Cre
     match res.status() {
         s if s.is_client_error() => bail!("Client error: {}. detail: {}", s, res.text().await?),
         s if s.is_server_error() => bail!("Server error: {}. detail: {}", s, res.text().await?),
-        _ => Ok(res.json::<CreateGroupsResponse>().await?),
+        _ => Ok(res.json::<PostGroupsResponse>().await?),
+    }
+}
+
+/// Actually.. there are more properties.
+#[derive(Deserialize, Debug)]
+pub struct PostInvitationsResponse {
+    pub email: String,
+}
+
+pub async fn post_invitations(
+    repository: &str,
+    permission: &str,
+    email: &str,
+) -> Result<PostInvitationsResponse> {
+    let url = format!(
+        "{base_url}/invitations/{repository}",
+        base_url = URL,
+        repository = repository,
+    );
+
+    let mut params = HashMap::new();
+    params.insert("permission", permission);
+    params.insert("email", email);
+
+    let res = CLIENT
+        .post(&url)
+        .basic_auth(USER_NAME.to_string(), Some(APP_PASSWORD.to_string()))
+        .form(&params)
+        .send()
+        .await?;
+
+    match res.status() {
+        s if s.is_client_error() => bail!("Client error: {}. detail: {}", s, res.text().await?),
+        s if s.is_server_error() => bail!("Server error: {}. detail: {}", s, res.text().await?),
+        _ => Ok(res.json::<PostInvitationsResponse>().await?),
     }
 }
