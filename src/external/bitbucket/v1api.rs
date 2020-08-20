@@ -9,9 +9,9 @@ const URL: &str = "https://api.bitbucket.org/1.0";
 lazy_static! {
     static ref CLIENT: reqwest::Client = reqwest::Client::new();
     static ref USER_NAME: String =
-        env::var("ATLRUST_USER_NAME").expect("You must specify ATLRUST_USER_NAME");
+        env::var("ATLRUS_USER_NAME").expect("You must specify ATLRUS_USER_NAME");
     static ref APP_PASSWORD: String =
-        env::var("ATLRUST_APP_PASSWORD").expect("You must specify ATLRUST_APP_PASSWORD");
+        env::var("ATLRUS_APP_PASSWORD").expect("You must specify ATLRUS_APP_PASSWORD");
 }
 
 /// Actually.. there are more properties.

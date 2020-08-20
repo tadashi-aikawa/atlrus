@@ -1,5 +1,5 @@
 [package]
-name = "atlrust"
+name = "atlrus"
 version = "0.1.0"
 authors = ["tadashi-aikawa <syou.maman@gmail.com>"]
 edition = "2018"
