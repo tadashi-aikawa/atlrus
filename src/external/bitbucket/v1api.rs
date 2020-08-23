@@ -46,6 +46,46 @@ pub async fn post_groups(workspaces_uuid: &str, group_name: &str) -> Result<Post
     }
 }
 
+#[derive(Deserialize, Debug)]
+pub struct PutGroupMembersResponse {
+    pub display_name: String,
+    /// Either uuid or email
+    pub uuid: String,
+    pub account_id: String,
+    pub nickname: String,
+    pub avatar: String,
+    pub is_team: bool,
+    pub is_staff: bool,
+    pub resource_uri: String,
+}
+
+/// Add a member to a group
+pub async fn put_group_member(
+    workspaces_uuid: &str,
+    group_slug: &str,
+    uuid: &str,
+) -> Result<PutGroupMembersResponse> {
+    let url = format!(
+        "{base_url}/groups/{workspace}/{group_slug}/members/{uuid}",
+        base_url = URL,
+        workspace = workspaces_uuid,
+        group_slug = group_slug,
+        uuid = uuid,
+    );
+
+    let res = CLIENT
+        .put(&url)
+        .basic_auth(USER_NAME.to_string(), Some(APP_PASSWORD.to_string()))
+        .send()
+        .await?;
+
+    match res.status() {
+        s if s.is_client_error() => bail!("Client error: {}. detail: {}", s, res.text().await?),
+        s if s.is_server_error() => bail!("Server error: {}. detail: {}", s, res.text().await?),
+        _ => Ok(res.json::<PutGroupMembersResponse>().await?),
+    }
+}
+
 /// Actually.. there are more properties.
 #[derive(Deserialize, Debug)]
 pub struct PostInvitationsResponse {
