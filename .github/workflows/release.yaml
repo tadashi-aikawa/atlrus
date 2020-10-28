@@ -15,10 +15,7 @@ jobs:
       with:
           args: /bin/bash -c "cargo build --release --target=x86_64-unknown-linux-musl"
 
-    - name: ls
-      run: ls -lR
-
-    # - uses: actions/upload-artifact@v2
-    #   with:
-    #     name: atlrus
-    #     path: /github/workspace/target/x86_64-unknown-linux-musl/release/atlrus
+    - uses: actions/upload-artifact@v2
+      with:
+        name: atlrus
+        path: target/x86_64-unknown-linux-musl/release/atlrus
