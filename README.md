@@ -16,11 +16,22 @@ Set all environmental variables.
 | ATLRUS_USER_NAME    | Account name for Bitbucket cloud | tadashi-aikawa |
 | ATLRUS_APP_PASSWORD | App password for Bitbucket cloud | di3948vmshg2i  |
 
+App password needs below permissions.
+
+|      Permission      |    Level     |
+| -------------------- | ------------ |
+| Account              | Write        |
+| Workspace membership | Read         |
+| Project              | Write        |
+| Repository           | Administrate |
+
+
 ### Input file
 
 Create `input.json` as following.
 
 ```json
+{
   "create_groups": {
     "workspace_uuid": "{29878156-d095-4fd8-94d4-xxxxxxxxxxxx}",
     "group_names": [
