@@ -19,3 +19,6 @@ Cargo.lock
 
 # idea
 /.idea
+
+# input
+/input.json
