@@ -87,12 +87,12 @@ async fn main() -> Result<()> {
 async fn do_create_groups(op: &CreateGroupsOperation) {
     for group_name in op.group_names.iter() {
         match bitbucket::v1api::post_groups(&op.workspace_uuid, &group_name).await {
-            Ok(group) => info!("Create a new group, {}!!", group.name),
+            Ok(group) => info!("💮 Create a new group: {}.", group.name),
             Err(err) => match err {
                 bitbucket::v1api::PostGroupError::GroupAlreadyExists => {
-                    warn!("Group `{}` already exists.", group_name)
+                    warn!("🔔 Group `{}` already exists.", group_name)
                 }
-                _ => error!("Fail to create a new group: {}.  {}", group_name, err),
+                _ => error!("❌ Fail to create a new group: {}.  {}", group_name, err),
             },
         }
     }
@@ -101,11 +101,8 @@ async fn do_create_groups(op: &CreateGroupsOperation) {
 async fn do_invite_members(op: &InviteMembersOperation) {
     for email in op.emails.iter() {
         match bitbucket::v1api::post_invitations(&op.repository, &op.permission, &email).await {
-            Ok(_) => info!("Invite {}!!", &email),
-            Err(err) => {
-                error!("Fail to invite {}..", &email);
-                error!("{}", err)
-            }
+            Ok(_) => info!("📨 Invite {}!!", &email),
+            Err(err) => error!("❌ Fail to invite {}.  {}", &email, err),
         }
     }
 }
