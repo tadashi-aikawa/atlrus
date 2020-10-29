@@ -18,7 +18,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: atlrus
-      path: target/x86_64-unknown-linux-musl/release/atlrus
+        path: target/x86_64-unknown-linux-musl/release/atlrus
 
     - name: "Slack notification (not success)"
       uses: homoluctus/slatify@master
