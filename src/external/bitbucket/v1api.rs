@@ -83,12 +83,26 @@ pub struct PutGroupMembersResponse {
     pub resource_uri: String,
 }
 
+#[derive(Error, Debug)]
+pub enum PutGroupMemberError {
+    #[error("{uuid:?} is not found.")]
+    NotFound { uuid: String },
+    #[error("{uuid:?} already exists in the group, {group_slug:?}.")]
+    AlreadyExists { uuid: String, group_slug: String },
+    #[error("Client error: {status:?}.  detail: {detail:?}")]
+    ClientError { status: StatusCode, detail: String },
+    #[error("Server error: {status:?}.  detail: {detail:?}")]
+    ServerError { status: StatusCode, detail: String },
+    #[error(transparent)]
+    ReqwestError(#[from] reqwest::Error),
+}
+
 /// Add a member to a group
 pub async fn put_group_member(
     workspaces_uuid: &str,
     group_slug: &str,
     uuid: &str,
-) -> Result<PutGroupMembersResponse> {
+) -> Result<PutGroupMembersResponse, PutGroupMemberError> {
     let url = format!(
         "{base_url}/groups/{workspace}/{group_slug}/members/{uuid}",
         base_url = URL,
@@ -104,8 +118,21 @@ pub async fn put_group_member(
         .await?;
 
     match res.status() {
-        s if s.is_client_error() => bail!("Client error: {}. detail: {}", s, res.text().await?),
-        s if s.is_server_error() => bail!("Server error: {}. detail: {}", s, res.text().await?),
+        StatusCode::NOT_FOUND => Err(PutGroupMemberError::NotFound {
+            uuid: uuid.to_string(),
+        }),
+        StatusCode::CONFLICT => Err(PutGroupMemberError::AlreadyExists {
+            uuid: uuid.to_string(),
+            group_slug: group_slug.to_string(),
+        }),
+        s if s.is_client_error() => Err(PutGroupMemberError::ClientError {
+            status: s,
+            detail: res.text().await?,
+        }),
+        s if s.is_server_error() => Err(PutGroupMemberError::ServerError {
+            status: s,
+            detail: res.text().await?,
+        }),
         _ => Ok(res.json::<PutGroupMembersResponse>().await?),
     }
 }

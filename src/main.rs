@@ -13,6 +13,8 @@ use env_logger::Env;
 use serde::Deserialize;
 use structopt::StructOpt;
 
+use bitbucket::v1api::PostGroupError::GroupAlreadyExists;
+use bitbucket::v1api::PutGroupMemberError::{AlreadyExists, NotFound};
 use external::bitbucket;
 
 mod external;
@@ -87,12 +89,10 @@ async fn main() -> Result<()> {
 async fn do_create_groups(op: &CreateGroupsOperation) {
     for group_name in op.group_names.iter() {
         match bitbucket::v1api::post_groups(&op.workspace_uuid, &group_name).await {
-            Ok(group) => info!("💮 Create a new group: {}.", group.name),
+            Ok(group) => info!("🟢 Create a new group: {}.", group.name),
             Err(err) => match err {
-                bitbucket::v1api::PostGroupError::GroupAlreadyExists => {
-                    warn!("🔔 Group `{}` already exists.", group_name)
-                }
-                _ => error!("❌ Fail to create a new group: {}.  {}", group_name, err),
+                GroupAlreadyExists => info!("🟤 Group `{}` already exists.", group_name),
+                _ => error!("🔴 Fail to create a new group: {}.  {}", group_name, err),
             },
         }
     }
@@ -101,8 +101,8 @@ async fn do_create_groups(op: &CreateGroupsOperation) {
 async fn do_invite_members(op: &InviteMembersOperation) {
     for email in op.emails.iter() {
         match bitbucket::v1api::post_invitations(&op.repository, &op.permission, &email).await {
-            Ok(_) => info!("📨 Invite {}!!", &email),
-            Err(err) => error!("❌ Fail to invite {}.  {}", &email, err),
+            Ok(_) => info!("🟢 Invite {}.", &email),
+            Err(err) => error!("🔴 Fail to invite {}.  {}", &email, err),
         }
     }
 }
@@ -111,11 +111,17 @@ async fn do_add_group_members(op: &AddGroupMembersOperation) {
     for group in op.groups.iter() {
         for email in group.emails.iter() {
             match bitbucket::v1api::put_group_member(&op.workspace_uuid, &group.slug, email).await {
-                Ok(_) => info!("Add {} to {}!!", &email, &group.slug),
-                Err(err) => {
-                    error!("Fail to add {} to {}..", &email, &group.slug);
-                    error!("{}", err)
-                }
+                Ok(_) => info!("🟢 Add {} to {}.", &email, &group.slug),
+                Err(err) => match err {
+                    AlreadyExists { .. } => {
+                        info!("🟤 `{}` already exists in {}.", &email, &group.slug)
+                    }
+                    NotFound { .. } => warn!(
+                        "🟡 At least either `{}` or `{}` is not found.",
+                        &group.slug, &email
+                    ),
+                    _ => error!("🔴 Fail to add {} to {}.", &email, &group.slug),
+                },
             }
         }
     }
