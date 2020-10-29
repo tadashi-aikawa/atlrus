@@ -88,10 +88,12 @@ async fn do_create_groups(op: &CreateGroupsOperation) {
     for group_name in op.group_names.iter() {
         match bitbucket::v1api::post_groups(&op.workspace_uuid, &group_name).await {
             Ok(group) => info!("Create a new group, {}!!", group.name),
-            Err(err) => {
-                error!("Fail to create a new group, {}..", group_name);
-                error!("{}", err)
-            }
+            Err(err) => match err {
+                bitbucket::v1api::PostGroupError::GroupAlreadyExists => {
+                    warn!("Group `{}` already.", group_name)
+                }
+                _ => error!("Fail to create a new group: {}.  {}", group_name, err),
+            },
         }
     }
 }

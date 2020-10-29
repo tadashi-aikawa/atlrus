@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::env;
 
 use anyhow::Result;
+use reqwest::StatusCode;
 use serde::Deserialize;
-use std::collections::HashMap;
+use thiserror::Error;
 
 const URL: &str = "https://api.bitbucket.org/1.0";
 
@@ -21,8 +23,23 @@ pub struct PostGroupsResponse {
     pub slug: String,
 }
 
+#[derive(Error, Debug)]
+pub enum PostGroupError {
+    #[error("group already exists")]
+    GroupAlreadyExists,
+    #[error("Client error: {status:?}.  detail: {detail:?}")]
+    ClientError { status: StatusCode, detail: String },
+    #[error("Server error: {status:?}.  detail: {detail:?}")]
+    ServerError { status: StatusCode, detail: String },
+    #[error(transparent)]
+    ReqwestError(#[from] reqwest::Error),
+}
+
 /// Create a group in specified workspace.
-pub async fn post_groups(workspaces_uuid: &str, group_name: &str) -> Result<PostGroupsResponse> {
+pub async fn post_groups(
+    workspaces_uuid: &str,
+    group_name: &str,
+) -> Result<PostGroupsResponse, PostGroupError> {
     let url = format!(
         "{base_url}/groups/{workspace}",
         base_url = URL,
@@ -40,8 +57,15 @@ pub async fn post_groups(workspaces_uuid: &str, group_name: &str) -> Result<Post
         .await?;
 
     match res.status() {
-        s if s.is_client_error() => bail!("Client error: {}. detail: {}", s, res.text().await?),
-        s if s.is_server_error() => bail!("Server error: {}. detail: {}", s, res.text().await?),
+        StatusCode::BAD_REQUEST => Err(PostGroupError::GroupAlreadyExists),
+        s if s.is_client_error() => Err(PostGroupError::ClientError {
+            status: s,
+            detail: res.text().await?,
+        }),
+        s if s.is_server_error() => Err(PostGroupError::ServerError {
+            status: s,
+            detail: res.text().await?,
+        }),
         _ => Ok(res.json::<PostGroupsResponse>().await?),
     }
 }
