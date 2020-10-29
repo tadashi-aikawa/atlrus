@@ -90,7 +90,7 @@ async fn do_create_groups(op: &CreateGroupsOperation) {
             Ok(group) => info!("Create a new group, {}!!", group.name),
             Err(err) => match err {
                 bitbucket::v1api::PostGroupError::GroupAlreadyExists => {
-                    warn!("Group `{}` already.", group_name)
+                    warn!("Group `{}` already exists.", group_name)
                 }
                 _ => error!("Fail to create a new group: {}.  {}", group_name, err),
             },
