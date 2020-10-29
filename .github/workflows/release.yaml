@@ -18,4 +18,26 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: atlrus
-        path: target/x86_64-unknown-linux-musl/release/atlrus
+      path: target/x86_64-unknown-linux-musl/release/atlrus
+
+    - name: "Slack notification (not success)"
+      uses: homoluctus/slatify@master
+      if: "! success()"
+      with:
+        type: ${{ job.status }}
+        username: GitHub Actions (Failure)
+        job_name: ":atlassian::rust: Tests"
+        mention: channel
+        mention_if: always
+        icon_emoji: "github"
+        url: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: "Slack Notification (success)"
+      uses: homoluctus/slatify@master
+      if: always()
+      with:
+        type: ${{ job.status }}
+        username: GitHub Actions (Success)
+        job_name: ":atlassian::rust: Tests"
+        icon_emoji: ":github:"
+        url: ${{ secrets.SLACK_WEBHOOK }}
