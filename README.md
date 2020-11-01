@@ -75,3 +75,9 @@ $ atlrus input.json
 ### Build
 
 `cargo build --release`
+
+### Release
+
+1. Update a version in `Cargo.toml`
+2. Commit and Tags `v_._._`
+3. Push
