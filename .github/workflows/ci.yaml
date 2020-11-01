@@ -1,9 +1,6 @@
-name: Release
+name: CI
 
-on:
-  push:
-    tags:
-      - v.*
+on: [push]
 
 jobs:
   build:
@@ -12,16 +9,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      
-    - name: Build static
-      uses: stevenleadbeater/rust-musl-builder@master
-      with:
-          args: /bin/bash -c "cargo build --release --target=x86_64-unknown-linux-musl"
 
-    - uses: actions/upload-artifact@v2
-      with:
-        name: atlrus
-        path: target/x86_64-unknown-linux-musl/release/atlrus
+    - name: Build
+      run: cargo build --verbose
 
     - name: "Slack notification (not success)"
       uses: homoluctus/slatify@master
@@ -29,7 +19,7 @@ jobs:
       with:
         type: ${{ job.status }}
         username: GitHub Actions (Failure)
-        job_name: ":atlassian::rust: Release"
+        job_name: ":atlassian::rust: Tests"
         mention: channel
         mention_if: always
         icon_emoji: "github"
@@ -41,6 +31,6 @@ jobs:
       with:
         type: ${{ job.status }}
         username: GitHub Actions (Success)
-        job_name: ":atlassian::rust: Release"
+        job_name: ":atlassian::rust: Tests"
         icon_emoji: ":github:"
         url: ${{ secrets.SLACK_WEBHOOK }}
